@@ -1,3 +1,4 @@
+import "server-only"
 import { cache } from "react"
 import request from "graphql-request"
 import { endpoint } from "@/app/constants"

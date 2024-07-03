@@ -1,42 +1,37 @@
-// app/page.tsx
-import { Input, Button } from "@/components/ui"
+import { getLocations } from "@/app/data/get-locations"
+import { getEpisodes } from "@/app/data/get-episodes"
+import { getCharacters } from "@/app/data/get-characters"
+import slug from "slug"
+import Home, { type SearchResults } from "./Home"
 
-export default function Home() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">
-        Welcome to the Rick and Morty Universe
-      </h1>
-
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Search the Multiverse</h2>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="Search for characters, locations, or episodes..."
-            className="flex-grow"
-          />
-          <Button>Search</Button>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Featured Character</h2>
-          {/* Add your featured character component here */}
-        </div>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Latest Episode</h2>
-          {/* Add your latest episode component here */}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">
-          Random Location Spotlight
-        </h2>
-        {/* Add your random location component here */}
-      </div>
-    </div>
+export default async function Page() {
+  const locations = await getLocations().then((locations) =>
+    Object.values(locations.locations).reduce((arr, loc) => {
+      arr.push({ label: loc.name, value: `/locations/${slug(loc.name)}` })
+      return arr
+    }, [] as SearchResults)
   )
+
+  const episodes = await getEpisodes().then((episodes) =>
+    Object.entries(episodes).flatMap(([season, seasonEpisodes]) =>
+      Object.entries(seasonEpisodes).map(([_, episode], i) => ({
+        label: `${episode.name} (Season ${+season})`,
+        value: `/season/${+season}/episode/${i + 1}/${slug(episode.name)}`,
+      }))
+    )
+  )
+  const characters = await getCharacters().then((characters) =>
+    Object.entries(characters).map(([nameSlug, character]) => ({
+      label: character.name,
+      value: `/characters/${nameSlug}`,
+    }))
+  )
+
+  const searchResults: SearchResults = [
+    ...locations,
+    ...episodes,
+    ...characters,
+  ]
+
+  return <Home searchResults={searchResults} />
 }

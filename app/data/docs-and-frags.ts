@@ -53,3 +53,32 @@ export const EpisodeFragment = graphql(`
     air_date
   }
 `)
+
+export const charactersInfoDocument = graphql(`
+  query characterInfo {
+    characters {
+      info {
+        count
+      }
+    }
+  }
+`)
+
+export const charactersByIdsDocument = graphql(`
+  query charactersByIds($ids: [ID!]!) {
+    charactersByIds(ids: $ids) {
+      ...CharacterItem
+    }
+  }
+`)
+
+export const CharacterFragment = graphql(`
+  fragment CharacterItem on Character {
+    id
+    name
+    status
+    type
+    image
+    species
+  }
+`)

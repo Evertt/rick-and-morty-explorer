@@ -12,20 +12,19 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
-import type { EpisodesCache } from "@/app/data/get-episodes"
 import slug from "slug"
+import type { EpisodesCache } from "@/app/data/get-episodes"
+import type { LocationsCache } from "@/app/data/get-locations"
+import type { CharactersCache } from "@/app/data/get-characters"
 
 type NavbarProps = {
   episodes: EpisodesCache
-  typeNames: string[]
-  dimensionNames: string[]
+  types: LocationsCache["types"]
+  dimensions: LocationsCache["dimensions"]
+  characters: CharactersCache
 }
 
-export function Navbar({
-  episodes,
-  typeNames,
-  dimensionNames,
-}: NavbarProps) {
+export function Navbar({ episodes, types, dimensions, characters }: NavbarProps) {
   const [openedDropdown, setOpenedDropdown] = useState<
     "seasons" | "locations" | "characters" | undefined
   >()
@@ -39,7 +38,7 @@ export function Navbar({
   }
 
   return (
-    <nav className="flex space-x-4">
+    <nav className="flex space-x-0 sm:space-x-8 justify-center">
       {/* Seasons dropdown */}
       <DropdownMenu
         open={openedDropdown === "seasons"}
@@ -48,17 +47,11 @@ export function Navbar({
         }
       >
         <div
-          className="contents"
           onMouseEnter={() => openDropdown("seasons")}
           onMouseLeave={closeDropdown}
         >
-          <DropdownMenuTrigger>
-            <Link
-              href="/seasons"
-              className="py-2 px-4 hover:bg-gray-700 rounded"
-            >
-              Seasons
-            </Link>
+          <DropdownMenuTrigger className="cursor-default py-2 px-4 hover:bg-gray-700 rounded">
+            Seasons
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             {Object.entries(episodes).map(([season, episodes]) => (
@@ -70,7 +63,12 @@ export function Navbar({
                   <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
                     {Object.entries(episodes).map(([idSlug, episode], i) => (
                       <DropdownMenuItem key={idSlug}>
-                        <Link href={`/season/${+season}/episode/${(i+1)}/${slug(episode.name)}`}>
+                        <Link
+                          className="inline-block w-full"
+                          href={`/season/${+season}/episode/${i + 1}/${slug(
+                            episode.name
+                          )}`}
+                        >
                           {episode.name}
                         </Link>
                       </DropdownMenuItem>
@@ -90,34 +88,40 @@ export function Navbar({
         }
       >
         <div
-          className="contents"
+          // className="contents"
           onMouseEnter={() => openDropdown("locations")}
           onMouseLeave={closeDropdown}
         >
-          <DropdownMenuTrigger>
-            <Link
-              href="/locations"
-              className="py-2 px-4 hover:bg-gray-700 rounded"
-            >
-              Locations
-            </Link>
+          <DropdownMenuTrigger className="cursor-default py-2 px-4 hover:bg-gray-700 rounded">
+            {/* <Link href="/locations"> */}
+            Locations
+            {/* </Link> */}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Types</DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
-                  {typeNames.map((type) => (
-                    <DropdownMenuItem key={type}>
-                      <Link
-                        className="inline-block w-full capitalize"
-                        href={`/locations?type=${encodeURIComponent(
-                          slug(type)
-                        )}`}
-                      >
+                  {Object.keys(types).map((type) => (
+                    <DropdownMenuSub key={type}>
+                      <DropdownMenuSubTrigger className="capitalize">
                         {type}
-                      </Link>
-                    </DropdownMenuItem>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
+                          {Object.values(types[type]).map((location) => (
+                            <DropdownMenuItem key={location.id}>
+                              <Link
+                                href={`/locations/${slug(location.name)}`}
+                                className="inline-block w-full capitalize"
+                              >
+                                {location.name}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
@@ -127,17 +131,28 @@ export function Navbar({
               <DropdownMenuSubTrigger>Dimensions</DropdownMenuSubTrigger>
               <DropdownMenuPortal>
                 <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
-                  {dimensionNames.map((dimension) => (
-                    <DropdownMenuItem key={dimension}>
-                      <Link
-                        className="inline-block w-full capitalize"
-                        href={`/locations?dimension=${encodeURIComponent(
-                          slug(dimension)
-                        )}`}
-                      >
+                  {Object.keys(dimensions).map((dimension) => (
+                    <DropdownMenuSub key={dimension}>
+                      <DropdownMenuSubTrigger className="capitalize">
                         {dimension}
-                      </Link>
-                    </DropdownMenuItem>
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent className="max-h-[60vh] overflow-y-auto">
+                          {Object.values(dimensions[dimension]).map(
+                            (location) => (
+                              <DropdownMenuItem key={location.id}>
+                                <Link
+                                  href={`/locations/${slug(location.name)}`}
+                                  className="inline-block w-full capitalize"
+                                >
+                                  {location.name}
+                                </Link>
+                              </DropdownMenuItem>
+                            )
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuPortal>
@@ -146,9 +161,33 @@ export function Navbar({
         </div>
       </DropdownMenu>
 
-      <Link href="/characters" className="py-2">
-        Characters
-      </Link>
+      <DropdownMenu
+        open={openedDropdown === "characters"}
+        onOpenChange={(open) =>
+          open ? openDropdown("characters") : closeDropdown()
+        }
+      >
+        <div
+          onMouseEnter={() => openDropdown("characters")}
+          onMouseLeave={closeDropdown}
+        >
+          <DropdownMenuTrigger className="cursor-default py-2 px-4 hover:bg-gray-700 rounded">
+            Characters
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-[60vh] overflow-y-auto">
+            {Object.entries(characters).map(([nameSlug, character]) => (
+              <DropdownMenuItem key={nameSlug}>
+                <Link
+                  href={`/characters/${nameSlug}`}
+                  className="inline-block w-full"
+                >
+                  {character.name}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </div>
+      </DropdownMenu>
     </nav>
   )
 }

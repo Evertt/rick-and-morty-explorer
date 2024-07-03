@@ -23,9 +23,6 @@ export type EpisodesCache = {
 export const preload = () => void getEpisodes()
 
 export const getEpisodes = cache(async () => {
-  const types = new Map<string, EpisodesCache["episodes"]>()
-  const dimensions = new Map<string, EpisodesCache["episodes"]>()
-
   const resp = await request(endpoint, episodesInfoDocument)
 
   const count = resp.episodes?.info?.count
