@@ -5,7 +5,10 @@ import request from "graphql-request"
 import { endpoint } from "@/app/constants"
 import type { CharacterItemFragment } from "@/app/gql/graphql"
 import type { SetNonNullable, ConditionalExcept, Simplify } from "type-fest"
-import { charactersInfoDocument, charactersByIdsDocument } from "./docs-and-frags"
+import {
+  charactersInfoDocument,
+  charactersByIdsDocument,
+} from "./docs-and-frags"
 
 type ID = string
 type ID_SLUG = string
@@ -20,6 +23,11 @@ export type CharactersCache = {
 
 export const preload = () => void getCharacters()
 
+export const getCharacter = cache(async (slug: string) => {
+  const allCharacters = await getCharacters()
+  return allCharacters[slug]
+})
+
 export const getCharacters = cache(async () => {
   const resp = await request(endpoint, charactersInfoDocument)
 
@@ -31,14 +39,15 @@ export const getCharacters = cache(async () => {
 
   const characterIds = Array.from({ length: count }, (_, i) => `${i + 1}`)
 
-  return await request(endpoint, charactersByIdsDocument, {
+  return request(endpoint, charactersByIdsDocument, {
     ids: characterIds,
   })
     .then((r) => (r.charactersByIds ?? []) as CharacterItemFragment[])
     .then((characters) =>
       characters
         .filter(
-          (character): character is CharacterItem => !!(character.id && character.name)
+          (character): character is CharacterItem =>
+            !!(character.id && character.name)
         )
         .reduce((obj, character) => {
           const slugId = slug(character.name)

@@ -22,6 +22,22 @@ export type EpisodesCache = {
 
 export const preload = () => void getEpisodes()
 
+/**
+ * Get an episode by season and episode ID
+ * @param seasonNum The nth season
+ * @param episodeNum The nth episode of that season
+ *
+ * @example
+ * `const episode = await getEpisode(3, 2)`
+ * returns the second episode of the third season
+ *
+ * @returns The episode
+ */
+export const getEpisode = cache(async (seasonNum: ID, episodeNum: ID) => {
+  const episodes = await getEpisodes()
+  return Object.values(episodes[seasonNum])[+episodeNum - 1]
+})
+
 export const getEpisodes = cache(async () => {
   const resp = await request(endpoint, episodesInfoDocument)
 

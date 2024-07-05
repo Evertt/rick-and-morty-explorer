@@ -33,7 +33,7 @@ export function getFirstParagraph(document: Document) {
 
 export function getSectionFromHeading(heading: string, document: Document) {
   const headingEl = document.querySelector(`h2:has(#${heading})`)
-  const paragraphs = [`<h2>${heading.replace("_", " ")}</h2>`]
+  const paragraphs = [`<h2>${heading.replace(/_/g, " ")}</h2>`]
 
   if (headingEl) {
     let currentElement = headingEl.nextElementSibling
@@ -41,7 +41,7 @@ export function getSectionFromHeading(heading: string, document: Document) {
     while (currentElement && currentElement.tagName !== "H2") {
       if (currentElement.tagName === "P") {
         const textContent = currentElement.textContent?.replace(/^\s+$/, "")
-        console.log("textContent is", textContent)
+
         if (!textContent) {
           currentElement = currentElement.nextElementSibling
           continue

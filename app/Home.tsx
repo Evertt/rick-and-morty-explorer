@@ -10,6 +10,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import Link from "next/link"
 
 export type SearchResults = { label: string; value: string }[]
 
@@ -21,8 +22,11 @@ export default function Home({
   const [value, setValue] = useState("")
   const router = useRouter()
 
+  // useEffect(() => setValue(""), [])
+
   useEffect(() => {
     if (!value) return
+    console.log("value: ", value)
     router.push(value)
   }, [value])
 
@@ -35,26 +39,42 @@ export default function Home({
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Search the Multiverse</h2>
         <div className="flex gap-2">
-          <Command className="has-[:focus-within]:signal">
+          <Command
+            className="has-[:focus-within]:signal"
+            filter={(value, search) =>
+              searchResults.find(
+                (result) =>
+                  result.value === value && result.label.includes(search)
+              )
+                ? 1
+                : 0
+            }
+          >
             <CommandInput
-              value={
-                searchResults.find((result) => result.value === value)?.label
-              }
-              className="flex-grow justify-between peer"
+              className="flex-grow justify-between after:content-[attr(data-value)]"
               placeholder="Search for characters, locations, or episodes..."
             />
-            <CommandList className="hidden signal:block">
+            <CommandList className="transition-all invisible signal:visible">
               <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup>
+              <CommandGroup className="has-[:focus-within]:signal has-[:active]:signal">
                 {searchResults.map((result) => (
                   <CommandItem
+                    className="focus-within:signal active:signal"
                     key={result.value}
                     value={result.value}
-                    onSelect={(currentValue) => {
-                      setValue(currentValue === value ? "" : currentValue)
-                    }}
+                    onSelect={(currentValue) => setValue(currentValue)}
                   >
-                    {result.label}
+                    <Link
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setValue(result.value)
+                        ;(e.target as HTMLAnchorElement).blur()
+                      }}
+                      className="focus-within:signal active:signal w-full"
+                      href={result.value}
+                    >
+                      {result.label}
+                    </Link>
                   </CommandItem>
                 ))}
               </CommandGroup>

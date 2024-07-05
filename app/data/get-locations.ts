@@ -5,8 +5,9 @@ import { endpoint } from "@/app/constants"
 import type { LocationItemFragment } from "@/app/gql/graphql"
 import type { SetNonNullable, ConditionalExcept, Simplify } from "type-fest"
 import { locationsInfoDocument, locationsByIdsDocument } from "./docs-and-frags"
+import slug from "slug"
 
-type ID = string
+type Slug = string
 
 type RequiredLIF = Required<LocationItemFragment>
 type NullableLocationItemProps = ConditionalExcept<RequiredLIF, string>
@@ -14,21 +15,26 @@ export type LocationItem = Simplify<SetNonNullable<NullableLocationItemProps>>
 
 export type LocationsCache = {
   locations: {
-    [id: ID]: LocationItem
+    [slug: Slug]: LocationItem
   }
   types: {
     [type: string]: {
-      [id: ID]: LocationItem
+      [slug: Slug]: LocationItem
     }
   }
   dimensions: {
     [dimension: string]: {
-      [id: ID]: LocationItem
+      [slug: Slug]: LocationItem
     }
   }
 }
 
 export const preload = () => void getLocations()
+
+export const getLocation = cache(async (slug: string) => {
+  const allLocations = await getLocations()
+  return allLocations.locations[slug]
+})
 
 export const getLocations = cache(async () => {
   const types = new Map<string, LocationsCache["locations"]>()
@@ -52,16 +58,16 @@ export const getLocations = cache(async () => {
       locations
         .filter(
           (loc): loc is LocationItem =>
-            !!(loc.id && (loc?.type || loc?.dimension))
+            !!(loc.name && (loc?.type || loc?.dimension))
         )
         .reduce((obj, loc) => {
-          obj[loc.id] = loc
+          obj[slug(loc.name)] = loc
           return obj
         }, {} as LocationsCache["locations"])
     )
 
-  for (const key in locations) {
-    const location = locations[key]
+  for (const slug in locations) {
+    const location = locations[slug]
 
     // Sometimes a location.type is an empty string,
     // which I prefer to filter out, because I can't use it
@@ -69,14 +75,14 @@ export const getLocations = cache(async () => {
     // Luckily enough, every location with an empty type has a non-empty dimension.
     if (location.type) {
       const type = types.get(location.type) ?? {}
-      type[location.id] = location
+      type[slug] = location
       types.set(location.type, type)
     }
 
     // The same goes for locations with an empty dimension string.
     if (location.dimension) {
       const dimension = dimensions.get(location.dimension) ?? {}
-      dimension[location.id] = location
+      dimension[slug] = location
       dimensions.set(location.dimension, dimension)
     }
   }
